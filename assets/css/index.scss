@@ -19,17 +19,34 @@ $ae-admin-color: #ff8200;
 
 #ae_job_filter_wrapper {
   position: relative;
+  #reset-filters {
+    background-color: transparent;
+    border: 0;
+    padding: 0;
+    color: #d83636;
+    cursor: pointer;
+    font-family: "Noto Sans", sans-serif;
+    font-size: 18px;
+    font-weight: 500;
+    &:focus {
+      outline: none;
+    }
+  }
   #job-filter-form {
     position: relative;
     width: 100%;
     display: flex;
+    flex-direction: column-reverse;
     justify-content: space-between;
     &__left {
       width: 100%;
-      max-width: 400px;
-      border: 1px solid #e4e4e4;
-      border-radius: 8px;
-      background-color: #fff;
+      height: 0;
+      overflow: hidden;
+      margin-top: 20px;
+      &.active {
+        height: 100%;
+        overflow: unset;
+      }
       &-header {
         border-bottom: 1px solid #e4e4e4;
         padding: 20px 24px;
@@ -41,29 +58,15 @@ $ae-admin-color: #ff8200;
           align-items: center;
           justify-content: space-between;
         }
-        #reset-filters {
-          background-color: transparent;
-          border: 0;
-          padding: 0;
-          color: #d83636;
-          cursor: pointer;
-          font-family: "Noto Sans", sans-serif;
-          font-size: 18px;
-          font-weight: 500;
-          &:focus {
-            outline: none;
-          }
-        }
       }
       &-body {
-        padding: 0px 24px;
+        display: flex;
+        column-gap: 20px;
         h5 {
           margin: 0;
         }
         .form-group {
-          padding-top: 26px;
-          padding-bottom: 32px;
-
+          width: 100%;
           display: flex;
           flex-wrap: wrap;
           row-gap: 14px;
@@ -104,13 +107,25 @@ $ae-admin-color: #ff8200;
     }
     &__right {
       width: 100%;
-      max-width: calc(100% - 400px - 48px);
       display: flex;
       justify-content: space-between;
+      align-items: flex-start;
+      column-gap: 20px;
+      .advanced_search {
+        cursor: pointer;
+        height: 47.59px;
+        padding: 0 11px;
+        display: flex;
+        border: 1px solid #e4e4e4;
+        background-color: #fff;
+        border-radius: 10px;
+        align-items: center;
+        justify-content: center;
+      }
       .form-group {
-        width: calc(40% - 8px);
+        width: 100%;
         &:last-child {
-          width: calc(20% - 8px);
+          width: fit-content;
         }
       }
       #search_filter {
@@ -146,7 +161,7 @@ $ae-admin-color: #ff8200;
         width: 100%;
       }
       #apply-filters {
-        width: 100%;
+        // width: 100%;
         font-family: "Noto Sans", sans-serif;
         font-weight: 500;
         font-size: 18px;
@@ -156,6 +171,7 @@ $ae-admin-color: #ff8200;
         cursor: pointer;
         color: #fff;
         border-radius: 10px;
+        padding: 0 11px;
         &:focus {
           outline: none;
         }
@@ -505,15 +521,12 @@ $ae-admin-color: #ff8200;
 
   #job_results_wrapper {
     width: 100%;
-    max-width: calc(100% - 400px - 48px) !important;
-
-    position: absolute;
-    top: 80px;
-    right: 0;
+    margin-top: 20px;
 
     #job-results {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
+      display: flex;
+      flex-direction: row;
+      flex-wrap: wrap;
       column-gap: 32px;
       row-gap: 32px;
       margin-top: 16px;
@@ -523,6 +536,14 @@ $ae-admin-color: #ff8200;
         border-radius: 8px;
         border: 1px solid #e4e4e4;
         position: relative;
+        width: 100%;
+        max-width: calc(33.33% - 22px);
+        @media only screen and (max-width: 1200px) {
+          max-width: calc(50% - 16px);
+        }
+        @media only screen and (max-width: 768px) {
+          max-width: calc(100%);
+        }
         &-top {
           display: flex;
           align-items: flex-start;
@@ -717,7 +738,7 @@ $ae-admin-color: #ff8200;
         }
       }
       .pagination {
-        grid-column: 1 / span 2;
+        width: 100%;
         display: flex;
         align-items: center;
         justify-content: center;

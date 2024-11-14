@@ -58,11 +58,13 @@ jQuery(document).ready(function ($) {
     /**
      * Custom dropdown for Location filter
      */
-    const locationDropdown = $(".dropdown").last();
+    const locationDropdown = $(".locationDropdown").last();
     const locationLabel = locationDropdown.find(
-      ".dropdown__filter-selected span"
+      ".locationDropdown__filter-selected span"
     );
-    const locationOptions = locationDropdown.find(".dropdown__select-option");
+    const locationOptions = locationDropdown.find(
+      ".locationDropdown__select-option"
+    );
     const locationDefaultOption = locationOptions.first().text(); // Store the default option text
     const locationDefaultValue = locationOptions.first().data("value"); // Store the default option value
 
@@ -76,6 +78,84 @@ jQuery(document).ready(function ($) {
         $("#job_location").val($(this).data("value"));
         fetchFilteredJobs(); // Fetch jobs immediately after selecting an option
         locationDropdown.removeClass("open");
+      });
+    });
+
+    /**
+     * Custom dropdown for Job Type filter
+     */
+    const jobTypeDropdown = $(".jobTypeDropdown").last();
+    const jobTypeLabel = jobTypeDropdown.find(
+      ".jobTypeDropdown__filter-selected span"
+    );
+    const jobTypeOptions = jobTypeDropdown.find(
+      ".jobTypeDropdown__select-option"
+    );
+    const jobTypeDefaultOption = jobTypeOptions.first().text(); // Store the default option text
+    const jobTypeDefaultValue = jobTypeOptions.first().data("value"); // Store the default option value
+
+    jobTypeLabel.on("click", function () {
+      jobTypeDropdown.toggleClass("open");
+    });
+
+    jobTypeOptions.each(function () {
+      $(this).on("click", function () {
+        jobTypeLabel.text($(this).text());
+        $("#job_listing_type").val($(this).data("value"));
+        fetchFilteredJobs(); // Fetch jobs immediately after selecting an option
+        jobTypeDropdown.removeClass("open");
+      });
+    });
+
+    /**
+     * Custom dropdown for Job Categories filter
+     */
+    const jobCatsDropdown = $(".jobCatsDropdown").last();
+    const jobCatsLabel = jobCatsDropdown.find(
+      ".jobCatsDropdown__filter-selected span"
+    );
+    const jobCatsOptions = jobCatsDropdown.find(
+      ".jobCatsDropdown__select-option"
+    );
+    const jobCatsDefaultOption = jobCatsOptions.first().text(); // Store the default option text
+    const jobCatsDefaultValue = jobCatsOptions.first().data("value"); // Store the default option value
+
+    jobCatsLabel.on("click", function () {
+      jobCatsDropdown.toggleClass("open");
+    });
+
+    jobCatsOptions.each(function () {
+      $(this).on("click", function () {
+        jobCatsLabel.text($(this).text());
+        $("#job_listing_category").val($(this).data("value"));
+        fetchFilteredJobs(); // Fetch jobs immediately after selecting an option
+        jobCatsDropdown.removeClass("open");
+      });
+    });
+
+    /**
+     * Custom dropdown for Organisation filter
+     */
+    const organisationDropdown = $(".organisationDropdown").last();
+    const organisationLabel = organisationDropdown.find(
+      ".organisationDropdown__filter-selected span"
+    );
+    const organisationOptions = organisationDropdown.find(
+      ".organisationDropdown__select-option"
+    );
+    const organisationDefaultOption = organisationOptions.first().text(); // Store the default option text
+    const organisationDefaultValue = organisationOptions.first().data("value"); // Store the default option value
+
+    organisationLabel.on("click", function () {
+      organisationDropdown.toggleClass("open");
+    });
+
+    organisationOptions.each(function () {
+      $(this).on("click", function () {
+        organisationLabel.text($(this).text());
+        $("#company_names").val($(this).data("value"));
+        fetchFilteredJobs(); // Fetch jobs immediately after selecting an option
+        organisationDropdown.removeClass("open");
       });
     });
 
@@ -138,6 +218,9 @@ jQuery(document).ready(function ($) {
       if (!$(e.target).closest(".dropdown").length) {
         dateDropdown.removeClass("open");
         locationDropdown.removeClass("open");
+        jobTypeDropdown.removeClass("open");
+        jobCatsDropdown.removeClass("open");
+        organisationDropdown.removeClass("open");
         // catHomeDropdown.removeClass("open");
       }
       if (!$(e.target).closest(".home_dropdown").length) {
@@ -194,11 +277,20 @@ jQuery(document).ready(function ($) {
     $("#reset-filters").on("click", function () {
       $("#job-filter-form")[0].reset();
       $("#custom_price_range").hide();
-      dateLabel.text(dateDefaultOption); // Reset the Date Post dropdown text to the default option
-      $("#date_post").val(dateDefaultValue); // Reset the hidden input value for Date Post to the default
+      dateLabel.text(dateDefaultOption);
+      $("#date_post").val(dateDefaultValue);
 
-      locationLabel.text(locationDefaultOption); // Reset the Location dropdown text to the default option
-      $("#job_location").val(locationDefaultValue); // Reset the hidden input value for Location to the default
+      locationLabel.text(locationDefaultOption);
+      $("#job_location").val(locationDefaultValue);
+
+      jobTypeLabel.text(jobTypeDefaultOption);
+      $("#job_listing_type").val(jobTypeDefaultValue);
+
+      jobCatsLabel.text(jobCatsDefaultOption);
+      $("#job_listing_category").val(jobCatsDefaultValue);
+
+      organisationLabel.text(organisationDefaultOption);
+      $("#company_names").val(organisationDefaultValue);
 
       $('input[name="search_query"]').val(""); // Reset the search input field
 
@@ -329,4 +421,15 @@ jQuery(document).ready(function ($) {
     //   }
     // });
   });
+});
+
+/**
+ * Advanced Search Btn
+ */
+jQuery(document).ready(function ($) {
+  if ($(".advanced_search").length > 0) {
+    $(".advanced_search").on("click", function () {
+      $("#ae_job_filter_wrapper #job-filter-form__left").toggleClass("active");
+    });
+  }
 });

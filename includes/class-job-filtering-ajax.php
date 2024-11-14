@@ -14,7 +14,7 @@ class Job_Filtering_Ajax
 
             $args = array(
                 'post_type' => 'job_listing',
-                'posts_per_page' => 14,
+                'posts_per_page' => 30,
                 'paged' => $paged,
                 'orderby' => 'modified', // Order by modified date
                 'order' => 'DESC', // Latest modified first
@@ -129,6 +129,7 @@ class Job_Filtering_Ajax
                     'terms' => $_POST['job_listing_type'],
                 );
             }
+
 
             // Job Category filter
             if (!empty($_POST['job_listing_category'])) {

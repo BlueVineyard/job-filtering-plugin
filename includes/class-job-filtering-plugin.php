@@ -14,6 +14,9 @@ class Job_Filtering_Plugin
     public static function job_filter_form()
     {
         $locations = self::get_job_locations();
+        $jobTypes = self::get_job_listing_types();
+        $jobCats = self::get_job_listing_categories();
+        $available_company_names = self::get_company_names();
 
         // Get query parameters if they exist
         $search_query = isset($_GET['search_query']) ? sanitize_text_field($_GET['search_query']) : '';
@@ -27,17 +30,9 @@ class Job_Filtering_Plugin
         <div id="ae_job_filter_wrapper">
             <form id="job-filter-form" action="<?php echo esc_url(home_url('/job-filter')); ?>" method="GET">
                 <div id="job-filter-form__left">
-                    <div id="job-filter-form__left-header">
-                        <div class="form-group">
-                            <h6 class="noto-sans-h6">Filter</h6>
-                            <button type="button" id="reset-filters">Clear all</button>
-                        </div>
-                    </div>
                     <div id="job-filter-form__left-body">
                         <!-- Date Post Filter -->
                         <div class="form-group">
-                            <h5 class="noto-sans-filter_title">Date Listed</h5>
-
                             <div class="dropdown">
                                 <label class="dropdown__options-filter">
                                     <ul class="dropdown__filter" role="listbox" tabindex="-1">
@@ -72,119 +67,64 @@ class Job_Filtering_Plugin
                             </div>
                         </div>
 
-                        <hr>
-
-                        <!-- Job Type Filter -->
+                        <!-- Organisation Dropdown Filter -->
                         <div class="form-group">
-                            <h5 class="noto-sans-filter_title">Job Type</h5>
-                            <?php
-                            $job_types = get_terms(array(
-                                'taxonomy' => 'job_listing_type',
-                                'hide_empty' => false,
-                            ));
-                            if (!is_wp_error($job_types) && !empty($job_types)) {
-                                foreach ($job_types as $job_type) {
-                                    echo '<div class="form-control"><label class="custom_checkbox"><input type="checkbox" name="job_listing_type[]" value="' . esc_attr($job_type->slug) . '">' . esc_html($job_type->name) . '<span class="checkbox"></span></label></div>';
-                                }
-                            }
-                            ?>
-                        </div>
+                            <div class="dropdown organisationDropdown">
+                                <label class="dropdown__options-filter organisationDropdown__options-filter">
+                                    <ul class="dropdown__filter organisationDropdown__filter" role="listbox" tabindex="-1">
+                                        <li class="dropdown__filter-selected organisationDropdown__filter-selected" aria-selected="true">
+                                            <svg xmlns="http://www.w3.org/2000/svg" height="25px" viewBox="0 -960 960 960" width="25px" fill="#000">
+                                                <path d="M89.33-101.85v-601.38h183.13v-182.62h416.92v367.08H872v416.92H552.05v-183.12h-144.1v183.12H89.33Zm51.18-51.18h131.95v-131.94H140.51v131.94Zm0-183.12h131.95v-131.44H140.51v131.44Zm0-183.95h131.95v-131.95H140.51v131.95Zm183.13 183.95h131.44v-131.44H323.64v131.44Zm0-183.95h131.44v-131.95H323.64v131.95Zm0-183.13h131.44v-131.44H323.64v131.44Zm182.62 367.08h131.95v-131.44H506.26v131.44Zm0-183.95h131.95v-131.95H506.26v131.95Zm0-183.13h131.95v-131.44H506.26v131.44Zm183.12 550.2h131.44v-131.94H689.38v131.94Zm0-183.12h131.44v-131.44H689.38v131.44Z" />
+                                            </svg>
 
-                        <hr>
-
-                        <!-- Salary Range Filter -->
-                        <div class="form-group" style="display:none;">
-                            <h5 class="noto-sans-filter_title">Salary Range</h5>
-                            <div class="form-control">
-                                <input type="radio" name="salary_range" value="under_1000" id="under_1000">
-                                <label for="under_1000">Under $1000</label>
-                            </div>
-                            <div class="form-control">
-                                <input type="radio" name="salary_range" value="1000_2500" id="1000_2500">
-                                <label for="1000_2500">$1000 to $2500</label>
-                            </div>
-                            <div class="form-control">
-                                <input type="radio" name="salary_range" value="2500_5000" id="2500_5000">
-                                <label for="2500_5000">$2500 to $5000</label>
-                            </div>
-                            <div class="form-control">
-                                <input type="radio" name="salary_range" value="custom" id="custom">
-                                <label for="custom">Custom</label>
-                            </div>
-                            <div id="custom_price_range" style="display: none;">
-                                <div class="price-input">
-                                    <div class="field">
-                                        <span>Min</span>
-                                        <input type="number" class="input-min" name="custom_salary_min" value="2500">
-                                    </div>
-                                    <div class="separator">-</div>
-                                    <div class="field">
-                                        <span>Max</span>
-                                        <input type="number" class="input-max" name="custom_salary_max" value="7500">
-                                    </div>
-                                </div>
-                                <div class="slider">
-                                    <div class="progress"></div>
-                                </div>
-                                <div class="range-input">
-                                    <input type="range" class="range-min" min="0" max="10000" value="2500" step="100">
-                                    <input type="range" class="range-max" min="0" max="10000" value="7500" step="100">
-                                </div>
+                                            <span>Any Organistaion</span>
+                                        </li>
+                                        <li>
+                                            <ul class="dropdown__select organisationDropdown__select">
+                                                <li class="dropdown__select-option organisationDropdown__select-option" role="option" data-value="">
+                                                    Any Organistaion
+                                                </li>
+                                                <?php foreach ($available_company_names as $organisation) : ?>
+                                                    <li class="dropdown__select-option organisationDropdown__select-option" role="option" data-value="<?php echo esc_attr($organisation); ?>">
+                                                        <?php echo esc_html($organisation); ?>
+                                                    </li>
+                                                <?php endforeach; ?>
+                                            </ul>
+                                        </li>
+                                    </ul>
+                                </label>
+                                <input type="hidden" name="company_names" id="company_names" value="" />
                             </div>
                         </div>
 
-                        <hr style="display:none;">
-
-
-
-                        <!-- Company Name Filter -->
+                        <!-- Job Categories Dropdown Filter -->
                         <div class="form-group">
-                            <h5 class="noto-sans-filter_title">Organisation</h5>
-                            <?php
-                            $available_company_names = self::get_company_names();
-                            if (!empty($available_company_names)) {
-                                foreach ($available_company_names as $company_name) {
-                            ?>
-                                    <label class="custom_checkbox">
-                                        <input type="checkbox" name="company_names[]" value="<?php echo esc_attr($company_name); ?>"
-                                            <?php if (in_array($company_name, $company_names)) echo 'checked'; ?>> <!-- Ensure URL values reflect checked state -->
-                                        <?php echo esc_html($company_name); ?>
-                                        <span class="checkbox"></span>
-                                    </label>
-                            <?php
-                                }
-                            } else {
-                                echo '<li>No companies found</li>';
-                            }
-                            ?>
-                        </div>
+                            <div class="dropdown jobCatsDropdown">
+                                <label class="dropdown__options-filter jobCatsDropdown__options-filter">
+                                    <ul class="dropdown__filter jobCatsDropdown__filter" role="listbox" tabindex="-1">
+                                        <li class="dropdown__filter-selected jobCatsDropdown__filter-selected" aria-selected="true">
+                                            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000">
+                                                <path d="M88-152v-302.46h302.46V-152H88Zm66-66h170.46v-170.46H154V-218Zm86.61-362 202.62-332.77L645.85-580H240.61Zm117.7-66h171.84l-86.92-138.15L358.31-646ZM870.54-55.62 766.08-160.08q-20.7 14.77-45.59 23.43-24.9 8.65-53.26 8.65-72.69 0-121.96-50.85Q496-229.71 496-303.23q0-72.69 49.27-121.96 49.27-49.27 121.96-49.27 73.53 0 124.38 49.27 50.85 49.27 50.85 121.96 0 28-8.15 51.08-8.16 23.07-21.93 43.77l105.47 105.46-47.31 47.3ZM667.21-194q44.87 0 77.06-31.06 32.19-31.06 32.19-76.04 0-44.98-32.17-76.17-32.17-31.19-77.04-31.19-44.87 0-75.06 31.06Q562-346.35 562-301.37q0 44.99 30.17 76.18Q622.34-194 667.21-194ZM324.46-388.46ZM444.23-646Z" />
+                                            </svg>
 
-                        <hr>
-
-                        <!-- Job Category Filter -->
-                        <div class="form-group">
-                            <h5 class="noto-sans-filter_title">Job Category</h5>
-                            <?php
-                            $job_categories = get_terms(array(
-                                'taxonomy' => 'job_listing_category',
-                                'hide_empty' => false,
-                            ));
-                            if (!is_wp_error($job_categories) && !empty($job_categories)) {
-                                foreach ($job_categories as $category) {
-                                    // Check if the current category is selected
-                                    $checked = in_array($category->slug, explode(',', $job_listing_category)) ? 'checked' : '';
-                                    echo '<label class="custom_checkbox"><input type="checkbox" name="job_listing_category[]" value="' . esc_attr($category->slug) . '" ' . $checked . '>' . esc_html($category->name) . '<span class="checkbox"></span></label>';
-
-                                    // echo '<label class="custom_checkbox"><input type="checkbox" name="job_listing_category[]" value="' . esc_attr($category->slug) . '">' . esc_html($category->name) . '<span class="checkbox"></span></label>';
-                                }
-                            }
-                            ?>
-                            <button type="button" id="toggle-more-categories">
-                                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M8.98822 1.5V16.5M16.4882 9H1.48822" stroke="#FF8200" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                                </svg>
-                                <span>More Categories</span>
-                            </button>
+                                            <span>Any Category</span>
+                                        </li>
+                                        <li>
+                                            <ul class="dropdown__select jobCatsDropdown__select">
+                                                <li class="dropdown__select-option jobCatsDropdown__select-option" role="option" data-value="">
+                                                    Any Category
+                                                </li>
+                                                <?php foreach ($jobCats as $jobCat) : ?>
+                                                    <li class="dropdown__select-option jobCatsDropdown__select-option" role="option" data-value="<?php echo esc_attr($jobCat->slug); ?>">
+                                                        <?php echo esc_html($jobCat->name); ?>
+                                                    </li>
+                                                <?php endforeach; ?>
+                                            </ul>
+                                        </li>
+                                    </ul>
+                                </label>
+                                <input type="hidden" name="job_listing_category" id="job_listing_category" value="" />
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -194,11 +134,13 @@ class Job_Filtering_Plugin
                             <input type="text" name="search_query" placeholder="Type your search" value="<?php echo esc_attr($search_query); ?>">
                         </div>
                     </div>
+
+                    <!-- Location Dropdown Filter -->
                     <div class="form-group">
-                        <div class="dropdown">
-                            <label class="dropdown__options-filter">
-                                <ul class="dropdown__filter" role="listbox" tabindex="-1">
-                                    <li class="dropdown__filter-selected" aria-selected="true">
+                        <div class="dropdown locationDropdown">
+                            <label class="dropdown__options-filter locationDropdown__options-filter">
+                                <ul class="dropdown__filter locationDropdown__filter" role="listbox" tabindex="-1">
+                                    <li class="dropdown__filter-selected locationDropdown__filter-selected" aria-selected="true">
                                         <svg width="20" height="21" viewBox="0 0 20 21" fill="none" xmlns="http://www.w3.org/2000/svg">
                                             <path d="M3.33337 8.95258C3.33337 5.20473 6.31814 2.1665 10 2.1665C13.6819 2.1665 16.6667 5.20473 16.6667 8.95258C16.6667 12.6711 14.5389 17.0102 11.2192 18.5619C10.4453 18.9236 9.55483 18.9236 8.78093 18.5619C5.46114 17.0102 3.33337 12.6711 3.33337 8.95258Z" stroke="#3D3935" stroke-width="1.5" />
                                             <ellipse cx="10" cy="8.8335" rx="2.5" ry="2.5" stroke="#3D3935" stroke-width="1.5" />
@@ -206,12 +148,12 @@ class Job_Filtering_Plugin
                                         <span><?php echo $job_location ? esc_html($job_location) : 'Any Location'; ?></span>
                                     </li>
                                     <li>
-                                        <ul class="dropdown__select">
-                                            <li class="dropdown__select-option" role="option" data-value="">
+                                        <ul class="dropdown__select locationDropdown__select">
+                                            <li class="dropdown__select-option locationDropdown__select-option" role="option" data-value="">
                                                 Any Location
                                             </li>
                                             <?php foreach ($locations as $location) : ?>
-                                                <li class="dropdown__select-option" role="option" data-value="<?php echo esc_attr($location->slug); ?>">
+                                                <li class="dropdown__select-option locationDropdown__select-option" role="option" data-value="<?php echo esc_attr($location->slug); ?>">
                                                     <?php echo esc_html($location->name); ?>
                                                 </li>
                                             <?php endforeach; ?>
@@ -223,14 +165,63 @@ class Job_Filtering_Plugin
                             <input type="hidden" name="job_location" id="job_location" value="<?php echo esc_attr($job_location); ?>" />
                         </div>
                     </div>
+
+                    <!-- Job Type Dropdown Filter -->
                     <div class="form-group">
-                        <button type="button" id="apply-filters">Search</button>
+                        <div class="dropdown jobTypeDropdown">
+                            <label class="dropdown__options-filter jobTypeDropdown__options-filter">
+                                <ul class="dropdown__filter jobTypeDropdown__filter" role="listbox" tabindex="-1">
+                                    <li class="dropdown__filter-selected jobTypeDropdown__filter-selected" aria-selected="true">
+                                        <svg width="24" height="25" viewBox="0 0 24 25" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M2 14.5C2 10.7288 2 8.84315 3.17157 7.67157C4.34315 6.5 6.22876 6.5 10 6.5H14C17.7712 6.5 19.6569 6.5 20.8284 7.67157C22 8.84315 22 10.7288 22 14.5C22 18.2712 22 20.1569 20.8284 21.3284C19.6569 22.5 17.7712 22.5 14 22.5H10C6.22876 22.5 4.34315 22.5 3.17157 21.3284C2 20.1569 2 18.2712 2 14.5Z" stroke="#636363" stroke-width="1.5" />
+                                            <path d="M21.6618 9.21973C18.6519 11.1761 17.147 12.1543 15.5605 12.6472C13.2416 13.3677 10.7586 13.3677 8.43963 12.6472C6.85313 12.1543 5.34822 11.1761 2.33838 9.21973" stroke="#636363" stroke-width="1.5" stroke-linecap="round" />
+                                            <path d="M8 11.5V13.5" stroke="#636363" stroke-width="1.5" stroke-linecap="round" />
+                                            <path d="M16 11.5V13.5" stroke="#636363" stroke-width="1.5" stroke-linecap="round" />
+                                            <path d="M9.1709 4.5C9.58273 3.33481 10.694 2.5 12.0002 2.5C13.3064 2.5 14.4177 3.33481 14.8295 4.5" stroke="#636363" stroke-width="1.5" stroke-linecap="round" />
+                                        </svg>
+
+                                        <span>Any Job Type</span>
+                                    </li>
+                                    <li>
+                                        <ul class="dropdown__select jobTypeDropdown__select">
+                                            <li class="dropdown__select-option jobTypeDropdown__select-option" role="option" data-value="">
+                                                Any Job Type
+                                            </li>
+                                            <?php foreach ($jobTypes as $jobType) : ?>
+                                                <li class="dropdown__select-option jobTypeDropdown__select-option" role="option" data-value="<?php echo esc_attr($jobType->slug); ?>">
+                                                    <?php echo esc_html($jobType->name); ?>
+                                                </li>
+                                            <?php endforeach; ?>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </label>
+                            <input type="hidden" name="job_listing_type" id="job_listing_type" value="" />
+                        </div>
+                    </div>
+
+
+                    <div class="form-group" style="display: flex; column-gap: 20px;">
+                        <div class="advanced_search">
+                            <svg xmlns="http://www.w3.org/2000/svg" height="25px" viewBox="0 -960 960 960" width="25px" fill="#000">
+                                <path d="M687.64-171.95q-52.93 0-89.48-36.67-36.54-36.68-36.54-89.8 0-53.11 36.53-89.68 36.54-36.57 89.46-36.57 52.92 0 89.82 36.57 36.9 36.57 36.9 89.68 0 53.12-36.74 89.8-36.74 36.67-89.95 36.67Zm-.2-51.18q31.11 0 53.41-22.14 22.3-22.14 22.3-53.22 0-30.81-22.15-52.9-22.15-22.1-53.26-22.1-31.1 0-53.02 22.02-21.93 22.01-21.93 52.92t21.78 53.17q21.77 22.25 52.87 22.25Zm-519.75-49.59v-51.18h298.87v51.18H167.69Zm105.44-262.61q-53.11 0-89.79-36.68-36.67-36.67-36.67-89.79 0-53.12 36.67-89.68 36.68-36.57 89.79-36.57 53.12 0 89.69 36.57 36.56 36.56 36.56 89.68 0 53.12-36.56 89.79-36.57 36.68-89.69 36.68Zm.08-51.18q30.81 0 52.9-22.14 22.1-22.14 22.1-53.23 0-30.8-22.02-52.9-22.02-22.09-52.92-22.09-30.91 0-53.17 22.01-22.25 22.02-22.25 52.93 0 30.9 22.14 53.16 22.13 22.26 53.22 22.26Zm221.56-49.59v-51.18h298.54v51.18H494.77Zm192.87 337.46ZM273.36-662.03Z" />
+                            </svg>
+                        </div>
+
+                        <button type="button" id="apply-filters">
+                            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#fff">
+                                <path d="M788.38-127.85 535.92-380.31q-30 24.54-73.5 38.04t-83.88 13.5q-106.1 0-179.67-73.53-73.56-73.53-73.56-179.57 0-106.05 73.53-179.71 73.53-73.65 179.57-73.65 106.05 0 179.71 73.56Q631.77-688.1 631.77-582q0 42.69-13.27 83.69t-37.27 70.69l253.46 253.47-46.31 46.3ZM378.54-394.77q79.61 0 133.42-53.81 53.81-53.8 53.81-133.42 0-79.62-53.81-133.42-53.81-53.81-133.42-53.81-79.62 0-133.42 53.81-53.81 53.8-53.81 133.42 0 79.62 53.81 133.42 53.8 53.81 133.42 53.81Z" />
+                            </svg>
+                        </button>
                     </div>
                 </div>
             </form>
 
             <div id="job_results_wrapper">
-                <div id="total-results"></div>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div id="total-results"></div>
+                    <button type="button" id="reset-filters">Clear all</button>
+                </div>
                 <div id="job-results"></div>
             </div>
         </div>
@@ -308,9 +299,9 @@ class Job_Filtering_Plugin
                                     <li class="cat_dropdown__select-option" role="option" data-value="">
                                         Any Category
                                     </li>
-                                    <?php foreach ($locations as $location) : ?>
-                                        <li class="dropdown__select-option" role="option" data-value="<?php echo esc_attr($location->slug); ?>">
-                                            <?php echo esc_html($location->name); ?>
+                                    <?php foreach ($categories as $category) : ?>
+                                        <li class="cat_dropdown__select-option" role="option" data-value="<?php echo esc_attr($category->slug); ?>">
+                                            <?php echo esc_html($category->name); ?>
                                         </li>
                                     <?php endforeach; ?>
                                 </ul>
@@ -328,23 +319,6 @@ class Job_Filtering_Plugin
 <?php
         return ob_get_clean();
     }
-
-    // private static function get_job_locations()
-    // {
-    //     global $wpdb;
-    //     // Query to get distinct locations from published jobs only
-    //     $locations = $wpdb->get_col("
-    //     SELECT DISTINCT meta_value 
-    //     FROM {$wpdb->prefix}postmeta 
-    //     WHERE meta_key = '_job_location' 
-    //     AND post_id IN (
-    //         SELECT ID FROM {$wpdb->prefix}posts 
-    //         WHERE post_status = 'publish' 
-    //         AND post_type = 'job_listing'
-    //     )
-    // ");
-    //     return $locations;
-    // }
 
     private static function get_job_locations()
     {
@@ -377,6 +351,15 @@ class Job_Filtering_Plugin
     {
         $terms = get_terms(array(
             'taxonomy' => 'job_listing_category',
+            'hide_empty' => false,
+        ));
+        return $terms;
+    }
+
+    private static function get_job_listing_types()
+    {
+        $terms = get_terms(array(
+            'taxonomy' => 'job_listing_type',
             'hide_empty' => false,
         ));
         return $terms;

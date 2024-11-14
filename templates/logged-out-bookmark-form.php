@@ -17,6 +17,22 @@ if (! defined('ABSPATH')) {
 }
 
 global $wp;
+// Initialize $is_bookmarked to false for logged out users
+$is_bookmarked = false;
+// Initialize $post_type if not set
+if (!isset($post_type)) {
+    $post_type = get_post_type_object('job_listing');
+}
+
+// Initialize $note if not set
+if (!isset($note)) {
+    $note = '';
+}
+
+// Initialize $post if not set
+if (!isset($post)) {
+    global $post;
+}
 ?>
 <form method="post" action="<?php echo defined('DOING_AJAX') ? '' : esc_url(remove_query_arg(array('page', 'paged'), add_query_arg($wp->query_string, '', home_url($wp->request)))); ?>" class="ae_job_card-bookmark_form <?php echo $is_bookmarked ? 'has-bookmark' : ''; ?>">
     <a class="add-bookmark" href="#" data-tooltip="<?php echo $is_bookmarked ? 'Update/Remove Bookmark' : 'Bookmark this Job'; ?>">
