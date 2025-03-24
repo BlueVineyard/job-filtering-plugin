@@ -15,6 +15,7 @@ define('JFP_PLUGIN_DIR', plugin_dir_path(__FILE__));
 
 require_once JFP_PLUGIN_DIR . 'includes/class-job-filtering-plugin.php';
 require_once JFP_PLUGIN_DIR . 'includes/class-job-filtering-ajax.php';
+require_once JFP_PLUGIN_DIR . 'includes/class-job-filtering-settings.php';
 
 
 function jfp_enqueue_scripts()
@@ -22,9 +23,27 @@ function jfp_enqueue_scripts()
     wp_enqueue_style('jfp-jQueryUI', 'https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css');
     wp_enqueue_style('jfp-job-filtering', plugin_dir_url(__FILE__) . 'assets/css/job-filtering.css');
     wp_enqueue_script('jquery-ui-slider');
+    
+    // Add Google Places API for autocomplete
+    wp_enqueue_script('google-places-api', 'https://maps.googleapis.com/maps/api/js?key=AIzaSyBbymmPvtJkHoiX31edT8PeRV7yEDCzDG4&libraries=places', array(), null, true);
 
-    wp_enqueue_script('jfp-job-filtering', plugin_dir_url(__FILE__) . 'assets/js/job-filtering.js', array('jquery'), null, true);
-    wp_localize_script('jfp-job-filtering', 'jfp_ajax', array('ajax_url' => admin_url('admin-ajax.php')));
+    wp_enqueue_script('jfp-job-filtering', plugin_dir_url(__FILE__) . 'assets/js/job-filtering.js', array('jquery', 'google-places-api'), null, true);
+    
+    // Get country restrictions from settings
+    $country_restrictions = get_option('jfp_country_restrictions', array('au')); // Default to Australia
+    
+    // Ensure it's an array
+    if (!is_array($country_restrictions)) {
+        $country_restrictions = array($country_restrictions);
+    }
+    
+    // Pass data to JavaScript
+    wp_localize_script('jfp-job-filtering', 'jfp_ajax', array(
+        'ajax_url' => admin_url('admin-ajax.php')
+    ));
+    
+    // Pass country restrictions to JavaScript
+    wp_localize_script('jfp-job-filtering', 'jfp_country_restrictions', $country_restrictions);
 }
 add_action('wp_enqueue_scripts', 'jfp_enqueue_scripts');
 

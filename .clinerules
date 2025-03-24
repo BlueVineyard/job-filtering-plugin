@@ -1,0 +1,95 @@
+# Cline Rules for Job Filtering Plugin
+
+## Project Patterns
+
+1. **WordPress Plugin Structure**
+   - Main plugin file: `job-filtering-plugin.php`
+   - Class files in `includes/` directory
+   - Frontend assets in `assets/` directory
+   - Templates in `templates/` directory
+
+2. **Naming Conventions**
+   - Class names: `Job_Filtering_Plugin`, `Job_Filtering_Ajax`, `Job_Filtering_Settings`
+   - Function prefix: `jfp_` (e.g., `jfp_enqueue_scripts`)
+   - Meta keys: Underscore prefix for private meta (e.g., `_job_latitude`)
+   - Shortcodes: `job_filter_form`, `job_filter_widget`
+
+3. **Code Organization**
+   - Separate classes for different functionality areas
+   - Static methods for utility functions
+   - AJAX handlers in dedicated class
+   - Frontend rendering in main plugin class
+
+## Implementation Details
+
+1. **Radius Filter Implementation**
+   - Frontend: HTML range input with min=5, max=200, default=50
+   - Backend: Haversine formula for distance calculation
+   - Data flow: Coordinates → Distance calculation → Filtering
+
+2. **Location Processing**
+   - Google Places API for autocomplete
+   - Google Maps Geocoding API for coordinates
+   - Browser Geolocation API for "Use My Location"
+   - Country restrictions default to Australia ('au')
+
+3. **AJAX Processing**
+   - WordPress admin-ajax.php endpoint
+   - Action hooks: `wp_ajax_fetch_filtered_jobs`, `wp_ajax_nopriv_fetch_filtered_jobs`
+   - JSON response format with HTML content and metadata
+
+4. **Performance Considerations**
+   - Geocoding results are cached in post meta
+   - Debounced inputs prevent excessive AJAX requests
+   - Pagination limits result set size
+
+## Critical Implementation Paths
+
+1. **Location-Based Filtering**
+   ```
+   User input → Google Places API → Coordinates → 
+   AJAX request → Distance calculation → Filtered results
+   ```
+
+2. **Radius Adjustment**
+   ```
+   Slider change → Update radius value → 
+   AJAX request → Filter by distance → Update results
+   ```
+
+3. **Geolocation Flow**
+   ```
+   "Use My Location" → Browser Geolocation API → 
+   Reverse Geocoding → Update form → Filter results
+   ```
+
+## Known Challenges
+
+1. **API Limitations**
+   - Google Maps API has usage limits and requires billing
+   - Geocoding can fail for various reasons
+   - Browser geolocation requires HTTPS and user permission
+
+2. **Performance Bottlenecks**
+   - Distance calculation for many jobs is resource-intensive
+   - Geocoding requests can slow down the user experience
+   - Large result sets may impact page performance
+
+3. **Browser Compatibility**
+   - Geolocation API support varies across browsers
+   - Range input styling inconsistencies between browsers
+   - Mobile device handling of location permissions
+
+## User Preferences
+
+1. **Default Settings**
+   - Default radius: 50km
+   - Radius range: 5km to 200km
+   - Country restriction: Australia
+   - Results per page: 30
+
+2. **UI Preferences**
+   - Real-time filtering on most input changes
+   - Visual feedback for radius changes
+   - Clear status messages for geolocation
+   - Debug information in results for development

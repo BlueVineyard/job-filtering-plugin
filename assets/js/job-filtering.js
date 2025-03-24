@@ -4,6 +4,146 @@ jQuery(document).ready(function ($) {
     $("#job-filter-widget-form").length > 0
   ) {
     var categoriesShown = 5;
+    var userLatitude = null;
+    var userLongitude = null;
+    var searchRadius = 50; // Default radius in kilometers
+
+    // Add geolocation UI to the form
+    function addGeolocationUI() {
+      console.log("Inside addGeolocationUI()");
+
+      // Create geolocation container
+      var geolocationHTML = `
+        <div class="form-group geolocation-filter" style="margin-top: 20px;">
+          <h5>Use My Location</h5>
+          <div style="display: flex; align-items: center; margin-bottom: 10px;">
+            <button type="button" id="get-location" class="location-btn" style="background-color: #ff8200; color: white; border: none; border-radius: 5px; padding: 8px 15px; cursor: pointer; margin-right: 10px;">
+              <svg width="20" height="20" viewBox="0 0 20 21" fill="none" xmlns="http://www.w3.org/2000/svg" style="vertical-align: middle; margin-right: 5px;">
+                <path d="M3.33337 8.95258C3.33337 5.20473 6.31814 2.1665 10 2.1665C13.6819 2.1665 16.6667 5.20473 16.6667 8.95258C16.6667 12.6711 14.5389 17.0102 11.2192 18.5619C10.4453 18.9236 9.55483 18.9236 8.78093 18.5619C5.46114 17.0102 3.33337 12.6711 3.33337 8.95258Z" stroke="white" stroke-width="1.5" />
+                <ellipse cx="10" cy="8.8335" rx="2.5" ry="2.5" stroke="white" stroke-width="1.5" />
+              </svg>
+              Use My Location
+            </button>
+            <span id="location-status"></span>
+          </div>
+          <div style="display: flex; align-items: center;">
+            <label for="geo-radius-slider" style="margin-right: 10px;">Radius: <span id="geo-radius-value">50</span> km</label>
+            <input type="range" id="geo-radius-slider" min="5" max="200" value="50" style="flex-grow: 1;">
+          </div>
+          <input type="hidden" id="user_latitude" name="latitude" value="">
+          <input type="hidden" id="user_longitude" name="longitude" value="">
+          <input type="hidden" id="geo_radius" name="radius" value="50">
+        </div>
+      `;
+
+      // Add to the form's left section
+      $("#job-filter-form__left-body").append(geolocationHTML);
+
+      // Initialize event listeners for geolocation UI
+      $("#get-location").on("click", getUserLocation);
+      $("#geo-radius-slider").on("input", function () {
+        var radius = $(this).val();
+        $("#geo-radius-value").text(radius);
+        $("#geo_radius").val(radius);
+        // Also update the main radius slider and hidden input for consistency
+        $("#location-radius-slider").val(radius);
+        $("#radius-value").text(radius);
+        $("#location_radius").val(radius);
+        searchRadius = radius;
+
+        // If we already have location, update the search
+        if (userLatitude && userLongitude) {
+          fetchFilteredJobs();
+        }
+      });
+    }
+
+    // Get user's current location
+    function getUserLocation() {
+      $("#location-status").text("Getting your location...");
+
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          function (position) {
+            userLatitude = position.coords.latitude;
+            userLongitude = position.coords.longitude;
+
+            $("#user_latitude").val(userLatitude);
+            $("#user_longitude").val(userLongitude);
+            $("#geo_radius").val(searchRadius);
+            $("#location_radius").val(searchRadius);
+
+            // Try to get the address from coordinates using Google Maps Geocoding API
+            reverseGeocode(userLatitude, userLongitude);
+
+            $("#location-status").html(
+              '<span style="color: green;">✓ Location found</span>'
+            );
+
+            // Fetch jobs with the new location
+            fetchFilteredJobs();
+          },
+          function (error) {
+            let errorMessage = "Unable to retrieve your location.";
+
+            switch (error.code) {
+              case error.PERMISSION_DENIED:
+                errorMessage =
+                  "Location access denied. Please enable location services.";
+                break;
+              case error.POSITION_UNAVAILABLE:
+                errorMessage = "Location information is unavailable.";
+                break;
+              case error.TIMEOUT:
+                errorMessage = "Location request timed out.";
+                break;
+            }
+
+            $("#location-status").html(
+              '<span style="color: red;">' + errorMessage + "</span>"
+            );
+          }
+        );
+      } else {
+        $("#location-status").html(
+          '<span style="color: red;">Geolocation is not supported by your browser</span>'
+        );
+      }
+    }
+
+    // Reverse geocode coordinates to address
+    function reverseGeocode(lat, lng) {
+      // Using Google Maps Geocoding API
+      const apiKey = "AIzaSyBbymmPvtJkHoiX31edT8PeRV7yEDCzDG4";
+      
+      // Get country restrictions from the global variable (set in PHP)
+      const countryRestrictions = typeof jfp_country_restrictions !== 'undefined' ? 
+        jfp_country_restrictions : ['au']; // Default to Australia if not set
+      
+      // Use the first country in the list for the region parameter
+      const region = countryRestrictions[0] || 'au';
+      
+      // Restrict results to the selected region
+      const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&region=${region}&result_type=street_address|locality|administrative_area_level_1&key=${apiKey}`;
+
+      $.ajax({
+        url: url,
+        type: "GET",
+        dataType: "json",
+        success: function (data) {
+          if (data.status === "OK" && data.results.length > 0) {
+            // Get the formatted address
+            const address = data.results[0].formatted_address;
+
+            // Update the location input field with the address
+            $("#job_location").val(address);
+          }
+        },
+        error: function (xhr, status, error) {
+          console.error("Error reverse geocoding:", error);
+        },
+      });
+    }
 
     function fetchFilteredJobs(page = 1) {
       var form = $("#job-filter-form");
@@ -15,7 +155,7 @@ jQuery(document).ready(function ($) {
           if (response.success) {
             $("#job-results").html(response.data.job_results);
             $("#total-results").text(response.data.total_jobs + " Job results");
-            setMinHeight(); // Call the function to set the min height
+            // setMinHeight(); // Call the function to set the min height
           }
         },
         error: function (jqXHR, textStatus, errorThrown) {
@@ -23,6 +163,9 @@ jQuery(document).ready(function ($) {
         },
       });
     }
+
+    // Add geolocation UI when the page loads
+    addGeolocationUI();
 
     function setMinHeight() {
       var jobCards = $(".ae_job_card");
@@ -56,29 +199,147 @@ jQuery(document).ready(function ($) {
     });
 
     /**
-     * Custom dropdown for Location filter
+     * Location input and radius slider
      */
-    const locationDropdown = $(".locationDropdown").last();
-    const locationLabel = locationDropdown.find(
-      ".locationDropdown__filter-selected span"
-    );
-    const locationOptions = locationDropdown.find(
-      ".locationDropdown__select-option"
-    );
-    const locationDefaultOption = locationOptions.first().text(); // Store the default option text
-    const locationDefaultValue = locationOptions.first().data("value"); // Store the default option value
+    const locationInput = $("#job_location");
+    const radiusSlider = $("#location-radius-slider"); // Match the ID in the HTML
+    const radiusValue = $("#radius-value");
+    const locationRadius = $("#location_radius"); // Match the ID in the HTML
+    
+    // Initialize Google Places Autocomplete
+    if (typeof google !== 'undefined' && google.maps && google.maps.places) {
+      // Get country restrictions from the global variable (set in PHP)
+      const countryRestrictions = typeof jfp_country_restrictions !== 'undefined' ? 
+        jfp_country_restrictions : ['au']; // Default to Australia if not set
+      
+      // Create the autocomplete object with country restrictions
+      const autocomplete = new google.maps.places.Autocomplete(
+        document.getElementById('job_location'),
+        {
+          types: ['geocode'],
+          componentRestrictions: { country: countryRestrictions }
+        }
+      );
+      
+      // When the user selects an address from the dropdown, populate the address field
+      autocomplete.addListener('place_changed', function() {
+        const place = autocomplete.getPlace();
+        
+        if (!place.geometry) {
+          console.log("No details available for input: '" + place.name + "'");
+          return;
+        }
+        
+        // Get the location coordinates
+        const lat = place.geometry.location.lat();
+        const lng = place.geometry.location.lng();
+        
+        // Store the coordinates in a global variable for use with the radius slider
+        window.selectedPlaceCoordinates = {
+          lat: lat,
+          lng: lng
+        };
+        
+        // Set the coordinates in the form fields
+        $("#user_latitude").val(lat);
+        $("#user_longitude").val(lng);
+        
+        console.log("Selected place: ", place.formatted_address);
+        console.log("Coordinates: ", lat, lng);
+        
+        // Fetch jobs with the new location
+        fetchFilteredJobs();
+      });
+      
+      // Apply the same to the widget location input if it exists
+      if ($("#widget_location_filter #job_location").length > 0) {
+        const widgetAutocomplete = new google.maps.places.Autocomplete(
+          document.getElementById('widget_location_filter').querySelector('#job_location'),
+          {
+            types: ['geocode'],
+            componentRestrictions: { country: countryRestrictions }
+          }
+        );
+        
+        widgetAutocomplete.addListener('place_changed', function() {
+          const place = widgetAutocomplete.getPlace();
+          
+          if (place.geometry) {
+            // Get the location coordinates
+            const lat = place.geometry.location.lat();
+            const lng = place.geometry.location.lng();
+            
+            // Store the coordinates in a global variable
+            window.selectedPlaceCoordinates = {
+              lat: lat,
+              lng: lng
+            };
+            
+            // Set the coordinates in the form fields
+            $("#widget_location_filter #user_latitude").val(lat);
+            $("#widget_location_filter #user_longitude").val(lng);
+            
+            console.log("Widget selected place: ", place.formatted_address);
+            console.log("Widget coordinates: ", lat, lng);
+          }
+          
+          // Submit the widget form when a place is selected
+          $("#job-filter-widget-form").submit();
+        });
+      }
+    } else {
+      console.error("Google Maps Places API not loaded");
+    }
 
-    locationLabel.on("click", function () {
-      locationDropdown.toggleClass("open");
+    // Update radius value when slider changes
+    radiusSlider.on("input", function() {
+      const radius = $(this).val();
+      radiusValue.text(radius);
+      locationRadius.val(radius);
+      
+      // Also update the geolocation radius slider and hidden input for consistency
+      $("#geo-radius-slider").val(radius);
+      $("#geo-radius-value").text(radius);
+      $("#geo_radius").val(radius);
+      searchRadius = radius;
+      
+      // Add visual feedback that the slider is working
+      radiusValue.css('color', '#ff8200');
+      setTimeout(function() {
+        radiusValue.css('color', '');
+      }, 500);
+      
+      console.log("Radius slider value changed to: " + radius + "km");
     });
 
-    locationOptions.each(function () {
-      $(this).on("click", function () {
-        locationLabel.text($(this).text());
-        $("#job_location").val($(this).data("value"));
-        fetchFilteredJobs(); // Fetch jobs immediately after selecting an option
-        locationDropdown.removeClass("open");
-      });
+    // Fetch jobs when slider changes (only when done sliding)
+    radiusSlider.on("change", function () {
+      // If location is entered, fetch jobs immediately
+      if (locationInput.val().trim() !== "") {
+        console.log("Fetching jobs with radius: " + $(this).val() + "km");
+        
+        // If we have coordinates from autocomplete, use them
+        if (window.selectedPlaceCoordinates) {
+          // Use the coordinates from the selected place
+          $("#user_latitude").val(window.selectedPlaceCoordinates.lat);
+          $("#user_longitude").val(window.selectedPlaceCoordinates.lng);
+        }
+        
+        // Always update both radius hidden inputs
+        $("#location_radius").val($(this).val());
+        $("#geo_radius").val($(this).val());
+        
+        fetchFilteredJobs();
+      }
+    });
+
+    // Fetch jobs when location input changes (with debounce)
+    let locationTimeout;
+    locationInput.on("input", function () {
+      clearTimeout(locationTimeout);
+      locationTimeout = setTimeout(function () {
+        fetchFilteredJobs();
+      }, 500); // 500ms debounce
     });
 
     /**
@@ -217,7 +478,6 @@ jQuery(document).ready(function ($) {
     $(document).on("click", function (e) {
       if (!$(e.target).closest(".dropdown").length) {
         dateDropdown.removeClass("open");
-        locationDropdown.removeClass("open");
         jobTypeDropdown.removeClass("open");
         jobCatsDropdown.removeClass("open");
         organisationDropdown.removeClass("open");
@@ -280,8 +540,18 @@ jQuery(document).ready(function ($) {
       dateLabel.text(dateDefaultOption);
       $("#date_post").val(dateDefaultValue);
 
-      locationLabel.text(locationDefaultOption);
-      $("#job_location").val(locationDefaultValue);
+      // Reset location input field
+      $("#job_location").val("");
+
+      // Reset radius sliders
+      $("#location-radius-slider").val(50);
+      $("#radius-value").text("50");
+      $("#location_radius").val("50");
+      
+      // Reset geolocation radius slider
+      $("#geo-radius-slider").val(50);
+      $("#geo-radius-value").text("50");
+      $("#geo_radius").val("50");
 
       jobTypeLabel.text(jobTypeDefaultOption);
       $("#job_listing_type").val(jobTypeDefaultValue);
@@ -293,6 +563,16 @@ jQuery(document).ready(function ($) {
       $("#company_names").val(organisationDefaultValue);
 
       $('input[name="search_query"]').val(""); // Reset the search input field
+
+      // Reset geolocation filter
+      userLatitude = null;
+      userLongitude = null;
+      $("#user_latitude").val("");
+      $("#user_longitude").val("");
+      $("#geo_radius").val("50");
+      $("#geo-radius-value").text("50");
+      $("#geo-radius-slider").val(50);
+      $("#location-status").html("");
 
       fetchFilteredJobs();
     });
@@ -430,6 +710,53 @@ jQuery(document).ready(function ($) {
   if ($(".advanced_search").length > 0) {
     $(".advanced_search").on("click", function () {
       $("#ae_job_filter_wrapper #job-filter-form__left").toggleClass("active");
+    });
+  }
+});
+
+/**
+ * Widget Location Filter
+ */
+jQuery(document).ready(function ($) {
+  if ($("#widget_location_filter").length > 0) {
+    const widgetLocationInput = $("#widget_location_filter #job_location");
+    const widgetRadiusSlider = $("#widget-radius-slider");
+    const widgetRadiusValue = $("#widget-radius-value");
+    const widgetLocationRadius = $("#widget_location_radius");
+
+    // Update radius value when slider changes
+    widgetRadiusSlider.on("input", function () {
+      const radius = $(this).val();
+      widgetRadiusValue.text(radius);
+      widgetLocationRadius.val(radius);
+    });
+
+    // Submit form when location input changes (with debounce)
+    let widgetLocationTimeout;
+    widgetLocationInput.on("input", function () {
+      clearTimeout(widgetLocationTimeout);
+      widgetLocationTimeout = setTimeout(function () {
+        $("#job-filter-widget-form").submit();
+      }, 1000); // 1 second debounce
+    });
+
+    // Submit form when radius changes
+    widgetRadiusSlider.on("change", function () {
+      if (widgetLocationInput.val().trim() !== "") {
+        // If we have coordinates from autocomplete, use them
+        if (window.selectedPlaceCoordinates) {
+          // Use the coordinates from the selected place
+          $("#widget_location_filter #user_latitude").val(window.selectedPlaceCoordinates.lat);
+          $("#widget_location_filter #user_longitude").val(window.selectedPlaceCoordinates.lng);
+          $("#widget_location_filter #search_radius").val($(this).val());
+          
+          console.log("Widget using coordinates from selected place: ", 
+            window.selectedPlaceCoordinates.lat, 
+            window.selectedPlaceCoordinates.lng);
+        }
+        
+        $("#job-filter-widget-form").submit();
+      }
     });
   }
 });
