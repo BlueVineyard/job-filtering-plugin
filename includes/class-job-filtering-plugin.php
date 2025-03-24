@@ -166,12 +166,6 @@ class Job_Filtering_Plugin
                         <input type="text" name="job_location" id="job_location" placeholder="Enter location"
                             value="<?php echo esc_attr($job_location); ?>" class="location-input">
                     </div>
-                    <div class="location-slider-container">
-                        <label for="location-radius-slider">Distance: <span id="radius-value">50</span> km</label>
-                        <input type="range" id="location-radius-slider" min="5" max="200" value="50"
-                            class="location-radius-slider">
-                        <input type="hidden" name="radius" id="location_radius" value="50">
-                    </div>
                 </div>
             </div>
 

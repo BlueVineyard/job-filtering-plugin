@@ -78,7 +78,6 @@
 #ae_job_filter_wrapper #job-filter-form__left-body {
   display: flex;
   column-gap: 20px;
-  flex-wrap: wrap;
 }
 #ae_job_filter_wrapper #job-filter-form__left-body h5 {
   margin: 0;
@@ -101,7 +100,9 @@
   border-radius: 4px;
   outline: none;
 }
-#ae_job_filter_wrapper #job-filter-form__left-body #radius-slider::-webkit-slider-thumb {
+#ae_job_filter_wrapper
+  #job-filter-form__left-body
+  #radius-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
   width: 20px;
@@ -110,7 +111,9 @@
   background: #ff8200;
   cursor: pointer;
 }
-#ae_job_filter_wrapper #job-filter-form__left-body #radius-slider::-moz-range-thumb {
+#ae_job_filter_wrapper
+  #job-filter-form__left-body
+  #radius-slider::-moz-range-thumb {
   width: 20px;
   height: 20px;
   border-radius: 50%;
@@ -217,7 +220,10 @@
 #ae_job_filter_wrapper #job-filter-form__right #location_filter {
   width: 100%;
 }
-#ae_job_filter_wrapper #job-filter-form__right #location_filter .location-input-wrapper {
+#ae_job_filter_wrapper
+  #job-filter-form__right
+  #location_filter
+  .location-input-wrapper {
   position: relative;
   margin-bottom: 10px;
 }
@@ -227,7 +233,10 @@
   left: 16px;
   transform: translateY(-50%);
 }
-#ae_job_filter_wrapper #job-filter-form__right #location_filter .location-input {
+#ae_job_filter_wrapper
+  #job-filter-form__right
+  #location_filter
+  .location-input {
   border-radius: 10px;
   border: 1px solid #e4e4e4;
   background-color: #fff;
@@ -237,7 +246,10 @@
   box-sizing: border-box;
   font-size: 18px;
 }
-#ae_job_filter_wrapper #job-filter-form__right #location_filter .location-input:focus {
+#ae_job_filter_wrapper
+  #job-filter-form__right
+  #location_filter
+  .location-input:focus {
   outline: 1px solid #ff8200;
 }
 
@@ -265,7 +277,8 @@
   background-color: #f8f8f8;
 }
 
-.pac-item-selected, .pac-item-selected:hover {
+.pac-item-selected,
+.pac-item-selected:hover {
   background-color: #fff8f0;
 }
 
@@ -288,16 +301,39 @@
   font-size: 13px;
   color: #757575;
 }
-#ae_job_filter_wrapper #job-filter-form__right #location_filter .location-slider-container {
+#ae_job_filter_wrapper
+  #job-filter-form__right
+  #location_filter
+  .location-slider-container,
+#ae_job_filter_wrapper
+  #job-filter-form__right
+  #location_filter
+  #geo-radius-container {
   padding: 0 5px;
 }
-#ae_job_filter_wrapper #job-filter-form__right #location_filter .location-slider-container label {
+#ae_job_filter_wrapper
+  #job-filter-form__right
+  #location_filter
+  .location-slider-container
+  label,
+#ae_job_filter_wrapper
+  #job-filter-form__right
+  #location_filter
+  #geo-radius-container
+  label {
   display: block;
-  margin-bottom: 8px;
+  width: 60px;
   font-size: 14px;
   color: #636363;
 }
-#ae_job_filter_wrapper #job-filter-form__right #location_filter .location-radius-slider {
+#ae_job_filter_wrapper
+  #job-filter-form__right
+  #location_filter
+  .location-radius-slider,
+#ae_job_filter_wrapper
+  #job-filter-form__right
+  #location_filter
+  #geo-radius-slider {
   -webkit-appearance: none;
   appearance: none;
   width: 100%;
@@ -306,7 +342,14 @@
   border-radius: 3px;
   outline: none;
 }
-#ae_job_filter_wrapper #job-filter-form__right #location_filter .location-radius-slider::-webkit-slider-thumb {
+#ae_job_filter_wrapper
+  #job-filter-form__right
+  #location_filter
+  .location-radius-slider::-webkit-slider-thumb,
+#ae_job_filter_wrapper
+  #job-filter-form__right
+  #location_filter
+  #geo-radius-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
   width: 18px;
@@ -315,7 +358,14 @@
   background: #ff8200;
   cursor: pointer;
 }
-#ae_job_filter_wrapper #job-filter-form__right #location_filter .location-radius-slider::-moz-range-thumb {
+#ae_job_filter_wrapper
+  #job-filter-form__right
+  #location_filter
+  .location-radius-slider::-moz-range-thumb,
+#ae_job_filter_wrapper
+  #job-filter-form__right
+  #location_filter
+  #geo-radius-slider::-moz-range-thumb {
   width: 18px;
   height: 18px;
   border-radius: 50%;
@@ -763,7 +813,8 @@
   #job_results_wrapper
   #job-results
   .ae_job_card__location
-  span em {
+  span
+  em {
   font-style: italic;
   color: #757b8a;
   font-size: 14px;
@@ -1192,7 +1243,10 @@
 #job-filter-widget-form #widget_location_filter .location-slider-container {
   padding: 0 5px;
 }
-#job-filter-widget-form #widget_location_filter .location-slider-container label {
+#job-filter-widget-form
+  #widget_location_filter
+  .location-slider-container
+  label {
   display: block;
   margin-bottom: 8px;
   font-size: 14px;
@@ -1207,7 +1261,9 @@
   border-radius: 3px;
   outline: none;
 }
-#job-filter-widget-form #widget_location_filter .location-radius-slider::-webkit-slider-thumb {
+#job-filter-widget-form
+  #widget_location_filter
+  .location-radius-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
   width: 18px;
@@ -1216,7 +1272,9 @@
   background: #ff8200;
   cursor: pointer;
 }
-#job-filter-widget-form #widget_location_filter .location-radius-slider::-moz-range-thumb {
+#job-filter-widget-form
+  #widget_location_filter
+  .location-radius-slider::-moz-range-thumb {
   width: 18px;
   height: 18px;
   border-radius: 50%;
