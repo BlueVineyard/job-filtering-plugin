@@ -140,15 +140,13 @@ class Job_Filtering_Ajax
         // This is a placeholder - you'll need to implement actual geocoding
         // using your preferred service (Google Maps, OpenStreetMap, etc.)
         
-        // Use Google Maps Geocoding API
-        $api_key = 'AIzaSyBbymmPvtJkHoiX31edT8PeRV7yEDCzDG4'; // Hardcoded API key
+        // Get API key from settings
+        $api_key = get_option('jfp_google_maps_api_key');
         
+        // If no API key is set in settings, return false
         if (empty($api_key)) {
-            // Fallback to the option if hardcoded key is empty
-            $api_key = get_option('jfp_google_maps_api_key');
-            if (empty($api_key)) {
-                return false;
-            }
+            error_log('Google Maps API key not found in settings');
+            return false;
         }
         
         // Get country restrictions from settings
@@ -436,21 +434,6 @@ class Job_Filtering_Ajax
             
             ob_start();
             
-            // Add a debug message at the top of the results to show the radius being used
-            echo '<div style="margin-bottom: 15px; padding: 10px; background-color: #f8f9fa; border-left: 4px solid #ff8200; font-size: 14px;">';
-            echo '<strong>Search Radius:</strong> ' . $current_radius . ' km';
-            
-            // Show if Google Maps API is being used
-            if (!empty($_POST['job_location']) || (!empty($_POST['latitude']) && !empty($_POST['longitude']))) {
-                echo ' | <strong>Location Search:</strong> Active';
-                
-                // Show the coordinates if available
-                if (!empty($_POST['latitude']) && !empty($_POST['longitude'])) {
-                    echo ' | <strong>Coordinates:</strong> ' . round($_POST['latitude'], 4) . ', ' . round($_POST['longitude'], 4);
-                }
-            }
-            
-            echo '</div>';
             
             if ($query->have_posts()) {
                 while ($query->have_posts()) {

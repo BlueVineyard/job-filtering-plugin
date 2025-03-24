@@ -113,8 +113,9 @@ jQuery(document).ready(function ($) {
 
     // Reverse geocode coordinates to address
     function reverseGeocode(lat, lng) {
-      // Using Google Maps Geocoding API
-      const apiKey = "AIzaSyBbymmPvtJkHoiX31edT8PeRV7yEDCzDG4";
+      // Get API key from the global variable (set in PHP)
+      const apiKey = typeof jfp_settings !== 'undefined' && jfp_settings.api_key ? 
+        jfp_settings.api_key : '';
       
       // Get country restrictions from the global variable (set in PHP)
       const countryRestrictions = typeof jfp_country_restrictions !== 'undefined' ? 
@@ -207,89 +208,106 @@ jQuery(document).ready(function ($) {
     const locationRadius = $("#location_radius"); // Match the ID in the HTML
     
     // Initialize Google Places Autocomplete
-    if (typeof google !== 'undefined' && google.maps && google.maps.places) {
-      // Get country restrictions from the global variable (set in PHP)
-      const countryRestrictions = typeof jfp_country_restrictions !== 'undefined' ? 
-        jfp_country_restrictions : ['au']; // Default to Australia if not set
-      
-      // Create the autocomplete object with country restrictions
-      const autocomplete = new google.maps.places.Autocomplete(
-        document.getElementById('job_location'),
-        {
-          types: ['geocode'],
-          componentRestrictions: { country: countryRestrictions }
-        }
-      );
-      
-      // When the user selects an address from the dropdown, populate the address field
-      autocomplete.addListener('place_changed', function() {
-        const place = autocomplete.getPlace();
-        
-        if (!place.geometry) {
-          console.log("No details available for input: '" + place.name + "'");
-          return;
-        }
-        
-        // Get the location coordinates
-        const lat = place.geometry.location.lat();
-        const lng = place.geometry.location.lng();
-        
-        // Store the coordinates in a global variable for use with the radius slider
-        window.selectedPlaceCoordinates = {
-          lat: lat,
-          lng: lng
-        };
-        
-        // Set the coordinates in the form fields
-        $("#user_latitude").val(lat);
-        $("#user_longitude").val(lng);
-        
-        console.log("Selected place: ", place.formatted_address);
-        console.log("Coordinates: ", lat, lng);
-        
-        // Fetch jobs with the new location
-        fetchFilteredJobs();
-      });
-      
-      // Apply the same to the widget location input if it exists
-      if ($("#widget_location_filter #job_location").length > 0) {
-        const widgetAutocomplete = new google.maps.places.Autocomplete(
-          document.getElementById('widget_location_filter').querySelector('#job_location'),
-          {
-            types: ['geocode'],
-            componentRestrictions: { country: countryRestrictions }
-          }
-        );
-        
-        widgetAutocomplete.addListener('place_changed', function() {
-          const place = widgetAutocomplete.getPlace();
+    function initializeGooglePlaces() {
+      if (typeof google !== 'undefined' && google.maps && google.maps.places) {
+        try {
+          // Get country restrictions from the global variable (set in PHP)
+          const countryRestrictions = typeof jfp_country_restrictions !== 'undefined' ? 
+            jfp_country_restrictions : ['au']; // Default to Australia if not set
           
-          if (place.geometry) {
-            // Get the location coordinates
-            const lat = place.geometry.location.lat();
-            const lng = place.geometry.location.lng();
+          // Make sure the element exists before trying to initialize autocomplete
+          const locationInput = document.getElementById('job_location');
+          if (locationInput) {
+            // Create the autocomplete object with country restrictions
+            const autocomplete = new google.maps.places.Autocomplete(
+              locationInput,
+              {
+                types: ['geocode'],
+                componentRestrictions: { country: countryRestrictions }
+              }
+            );
             
-            // Store the coordinates in a global variable
-            window.selectedPlaceCoordinates = {
-              lat: lat,
-              lng: lng
-            };
-            
-            // Set the coordinates in the form fields
-            $("#widget_location_filter #user_latitude").val(lat);
-            $("#widget_location_filter #user_longitude").val(lng);
-            
-            console.log("Widget selected place: ", place.formatted_address);
-            console.log("Widget coordinates: ", lat, lng);
+            // When the user selects an address from the dropdown, populate the address field
+            autocomplete.addListener('place_changed', function() {
+              const place = autocomplete.getPlace();
+              
+              if (!place.geometry) {
+                console.log("No details available for input: '" + place.name + "'");
+                return;
+              }
+              
+              // Get the location coordinates
+              const lat = place.geometry.location.lat();
+              const lng = place.geometry.location.lng();
+              
+              // Store the coordinates in a global variable for use with the radius slider
+              window.selectedPlaceCoordinates = {
+                lat: lat,
+                lng: lng
+              };
+              
+              // Set the coordinates in the form fields
+              $("#user_latitude").val(lat);
+              $("#user_longitude").val(lng);
+              
+              console.log("Selected place: ", place.formatted_address);
+              console.log("Coordinates: ", lat, lng);
+              
+              // Fetch jobs with the new location
+              fetchFilteredJobs();
+            });
           }
           
-          // Submit the widget form when a place is selected
-          $("#job-filter-widget-form").submit();
-        });
+          // Apply the same to the widget location input if it exists
+          const widgetLocationInput = document.querySelector("#widget_location_filter #job_location");
+          if (widgetLocationInput) {
+            const widgetAutocomplete = new google.maps.places.Autocomplete(
+              widgetLocationInput,
+              {
+                types: ['geocode'],
+                componentRestrictions: { country: countryRestrictions }
+              }
+            );
+            
+            widgetAutocomplete.addListener('place_changed', function() {
+              const place = widgetAutocomplete.getPlace();
+              
+              if (place.geometry) {
+                // Get the location coordinates
+                const lat = place.geometry.location.lat();
+                const lng = place.geometry.location.lng();
+                
+                // Store the coordinates in a global variable
+                window.selectedPlaceCoordinates = {
+                  lat: lat,
+                  lng: lng
+                };
+                
+                // Set the coordinates in the form fields
+                $("#widget_location_filter #user_latitude").val(lat);
+                $("#widget_location_filter #user_longitude").val(lng);
+                
+                console.log("Widget selected place: ", place.formatted_address);
+                console.log("Widget coordinates: ", lat, lng);
+              }
+              
+              // Submit the widget form when a place is selected
+              $("#job-filter-widget-form").submit();
+            });
+          }
+        } catch (error) {
+          console.error("Error initializing Google Places Autocomplete:", error);
+        }
+      } else {
+        console.warn("Google Maps Places API not loaded. Location autocomplete will not be available.");
       }
-    } else {
-      console.error("Google Maps Places API not loaded");
     }
+    
+    // Initialize Google Places when the page is fully loaded
+    $(window).on('load', function() {
+      // Wait a short time to ensure all scripts are loaded
+      setTimeout(initializeGooglePlaces, 500);
+    });
 
     // Update radius value when slider changes
     radiusSlider.on("input", function() {

@@ -24,10 +24,29 @@ function jfp_enqueue_scripts()
     wp_enqueue_style('jfp-job-filtering', plugin_dir_url(__FILE__) . 'assets/css/job-filtering.css');
     wp_enqueue_script('jquery-ui-slider');
     
-    // Add Google Places API for autocomplete
-    wp_enqueue_script('google-places-api', 'https://maps.googleapis.com/maps/api/js?key=AIzaSyBbymmPvtJkHoiX31edT8PeRV7yEDCzDG4&libraries=places', array(), null, true);
+    // Get API key from settings
+    $api_key = get_option('jfp_google_maps_api_key', ''); // Get API key from settings
+    
+    // Check if another plugin has already enqueued Google Maps API
+    global $wp_scripts;
+    $maps_api_enqueued = false;
+    
+    if (isset($wp_scripts->registered)) {
+        foreach ($wp_scripts->registered as $script) {
+            // Check if any script URL contains maps.googleapis.com
+            if (isset($script->src) && strpos($script->src, 'maps.googleapis.com') !== false) {
+                $maps_api_enqueued = true;
+                break;
+            }
+        }
+    }
+    
+    // Only enqueue Google Maps API if it's not already enqueued
+    if (!$maps_api_enqueued && !empty($api_key)) {
+        wp_enqueue_script('jfp-google-places-api', 'https://maps.googleapis.com/maps/api/js?key=' . $api_key . '&libraries=places', array(), null, true);
+    }
 
-    wp_enqueue_script('jfp-job-filtering', plugin_dir_url(__FILE__) . 'assets/js/job-filtering.js', array('jquery', 'google-places-api'), null, true);
+    wp_enqueue_script('jfp-job-filtering', plugin_dir_url(__FILE__) . 'assets/js/job-filtering.js', array('jquery'), null, true);
     
     // Get country restrictions from settings
     $country_restrictions = get_option('jfp_country_restrictions', array('au')); // Default to Australia
@@ -40,6 +59,11 @@ function jfp_enqueue_scripts()
     // Pass data to JavaScript
     wp_localize_script('jfp-job-filtering', 'jfp_ajax', array(
         'ajax_url' => admin_url('admin-ajax.php')
+    ));
+    
+    // Pass API key and country restrictions to JavaScript
+    wp_localize_script('jfp-job-filtering', 'jfp_settings', array(
+        'api_key' => $api_key
     ));
     
     // Pass country restrictions to JavaScript
