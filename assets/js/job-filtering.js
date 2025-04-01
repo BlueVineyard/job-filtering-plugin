@@ -236,147 +236,112 @@ jQuery(document).ready(function ($) {
     const locationRadius = $("#location_radius"); // Match the ID in the HTML
 
     // Initialize Google Places Autocomplete
-    function initializeGooglePlaces() {
-      if (typeof google !== "undefined" && google.maps && google.maps.places) {
-        try {
-          // Get country restrictions from the global variable (set in PHP)
-          const countryRestrictions =
-            typeof jfp_country_restrictions !== "undefined"
-              ? jfp_country_restrictions
-              : ["au"]; // Default to Australia if not set
+    async function initializeGooglePlaces() {
+      try {
+        // Dynamically load the places library as recommended in the latest Google Maps API
+        const { Place, Autocomplete } = await google.maps.importLibrary('places');
+        
+        // Get country restrictions from the global variable (set in PHP)
+        const countryRestrictions =
+          typeof jfp_country_restrictions !== "undefined"
+            ? jfp_country_restrictions
+            : ["au"]; // Default to Australia if not set
 
-          // Make sure the element exists before trying to initialize autocomplete
-          const locationInputContainer = document.getElementById("job_location").parentNode;
-          const locationInput = document.getElementById("job_location");
-          
-          if (locationInput) {
-            // Hide the original input - we'll use it to store the value
-            $(locationInput).css('display', 'none');
-            
-            // Create a container for the PlaceAutocompleteElement
-            const autocompleteContainer = document.createElement('div');
-            autocompleteContainer.id = 'place-autocomplete-container';
-            locationInputContainer.insertBefore(autocompleteContainer, locationInput);
-            
-            // Create and configure the PlaceAutocompleteElement
-            const autocompleteElement = new google.maps.places.PlaceAutocompleteElement({
+        // Make sure the element exists before trying to initialize autocomplete
+        const locationInput = document.getElementById("job_location");
+        
+        if (locationInput) {
+          // Create the autocomplete object with country restrictions
+          const autocomplete = new Autocomplete(
+            locationInput,
+            {
               types: ["geocode"],
               componentRestrictions: { country: countryRestrictions },
               fields: ["geometry", "formatted_address", "name"],
-            });
-            
-            // Append the element to our container
-            autocompleteContainer.appendChild(autocompleteElement);
-            
-            // Style the new element to match our design
-            $(autocompleteContainer).find('input').addClass('form-control');
-            
-            // When the user selects an address
-            autocompleteElement.addEventListener("place_changed", (event) => {
-              const place = event.place;
-              
-              if (!place || !place.geometry) {
-                console.log("No details available for input");
-                return;
-              }
-              
-              // Get the location coordinates
-              const lat = place.geometry.location.lat;
-              const lng = place.geometry.location.lng;
-              
-              // Store the coordinates in a global variable for use with the radius slider
-              window.selectedPlaceCoordinates = {
-                lat: lat,
-                lng: lng,
-              };
-              
-              // Set the coordinates in the form fields
-              $("#user_latitude").val(lat);
-              $("#user_longitude").val(lng);
-              
-              // Update the original input with the formatted address
-              $(locationInput).val(place.formatted_address || place.name);
-              
-              console.log("Selected place: ", place.formatted_address || place.name);
-              console.log("Coordinates: ", lat, lng);
-              
-              // Show the radius slider since we have a location
-              $("#geo-radius-container").show();
-              
-              // Fetch jobs with the new location
-              fetchFilteredJobs();
-            });
-          }
-          
-          // Apply the same to the widget location input if it exists
-          const widgetLocationInput = document.querySelector(
-            "#widget_location_filter #job_location"
+            }
           );
-          
-          if (widgetLocationInput) {
-            // Hide the original input - we'll use it to store the value
-            $(widgetLocationInput).css('display', 'none');
+
+          // When the user selects an address from the dropdown, populate the address field
+          autocomplete.addListener("place_changed", function () {
+            const place = autocomplete.getPlace();
+
+            if (!place.geometry) {
+              console.log(
+                "No details available for input: '" + place.name + "'"
+              );
+              return;
+            }
+
+            // Get the location coordinates
+            const lat = place.geometry.location.lat();
+            const lng = place.geometry.location.lng();
+
+            // Store the coordinates in a global variable for use with the radius slider
+            window.selectedPlaceCoordinates = {
+              lat: lat,
+              lng: lng,
+            };
+
+            // Set the coordinates in the form fields
+            $("#user_latitude").val(lat);
+            $("#user_longitude").val(lng);
+
+            console.log("Selected place: ", place.formatted_address);
+            console.log("Coordinates: ", lat, lng);
             
-            // Create a container for the PlaceAutocompleteElement
-            const widgetAutocompleteContainer = document.createElement('div');
-            widgetAutocompleteContainer.id = 'widget-place-autocomplete-container';
-            widgetLocationInput.parentNode.insertBefore(widgetAutocompleteContainer, widgetLocationInput);
-            
-            // Create and configure the PlaceAutocompleteElement
-            const widgetAutocompleteElement = new google.maps.places.PlaceAutocompleteElement({
+            // Show the radius slider since we have a location
+            $("#geo-radius-container").show();
+
+            // Fetch jobs with the new location
+            fetchFilteredJobs();
+          });
+        }
+
+        // Apply the same to the widget location input if it exists
+        const widgetLocationInput = document.querySelector(
+          "#widget_location_filter #job_location"
+        );
+        
+        if (widgetLocationInput) {
+          const widgetAutocomplete = new Autocomplete(
+            widgetLocationInput,
+            {
               types: ["geocode"],
               componentRestrictions: { country: countryRestrictions },
               fields: ["geometry", "formatted_address", "name"],
-            });
-            
-            // Append the element to our container
-            widgetAutocompleteContainer.appendChild(widgetAutocompleteElement);
-            
-            // Style the new element to match our design
-            $(widgetAutocompleteContainer).find('input').addClass('form-control');
-            
-            // When the user selects an address
-            widgetAutocompleteElement.addEventListener("place_changed", (event) => {
-              const place = event.place;
-              
-              if (!place || !place.geometry) {
-                console.log("No details available for widget input");
-                return;
-              }
-              
+            }
+          );
+
+          widgetAutocomplete.addListener("place_changed", function () {
+            const place = widgetAutocomplete.getPlace();
+
+            if (place.geometry) {
               // Get the location coordinates
-              const lat = place.geometry.location.lat;
-              const lng = place.geometry.location.lng;
-              
+              const lat = place.geometry.location.lat();
+              const lng = place.geometry.location.lng();
+
               // Store the coordinates in a global variable
               window.selectedPlaceCoordinates = {
                 lat: lat,
                 lng: lng,
               };
-              
+
               // Set the coordinates in the form fields
               $("#widget_location_filter #user_latitude").val(lat);
               $("#widget_location_filter #user_longitude").val(lng);
-              
-              // Update the original input with the formatted address
-              $(widgetLocationInput).val(place.formatted_address || place.name);
-              
-              console.log("Widget selected place: ", place.formatted_address || place.name);
+
+              console.log("Widget selected place: ", place.formatted_address);
               console.log("Widget coordinates: ", lat, lng);
-              
-              // Submit the widget form when a place is selected
-              $("#job-filter-widget-form").submit();
-            });
-          }
-        } catch (error) {
-          console.error(
-            "Error initializing Google Places Autocomplete:",
-            error
-          );
+            }
+
+            // Submit the widget form when a place is selected
+            $("#job-filter-widget-form").submit();
+          });
         }
-      } else {
-        console.warn(
-          "Google Maps Places API not loaded. Location autocomplete will not be available."
+      } catch (error) {
+        console.error(
+          "Error initializing Google Places Autocomplete:",
+          error
         );
       }
     }
