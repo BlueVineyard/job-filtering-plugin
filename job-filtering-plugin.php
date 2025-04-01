@@ -44,7 +44,8 @@ function jfp_enqueue_scripts()
     wp_enqueue_script('jfp-job-filtering', plugin_dir_url(__FILE__) . 'assets/js/job-filtering.js', array('jquery'), null, true);
     // Only enqueue Google Maps API if it's not already enqueued
     if (!$maps_api_enqueued && !empty($api_key)) {
-        wp_enqueue_script('jfp-google-places-api', 'https://maps.googleapis.com/maps/api/js?key=' . $api_key . '&libraries=places', array(), null, true);
+        // Use the newer approach recommended by Google Maps Platform
+        wp_enqueue_script('jfp-google-maps-api', 'https://maps.googleapis.com/maps/api/js?key=' . $api_key, array(), null, true);
     }
 
 
