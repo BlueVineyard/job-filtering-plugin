@@ -1,8 +1,12 @@
+
+
 jQuery(document).ready(function ($) {
   if (
     $("#ae_job_filter_wrapper").length > 0 ||
     $("#job-filter-widget-form").length > 0
   ) {
+   
+    
     var categoriesShown = 5;
     var userLatitude = null;
     var userLongitude = null;
@@ -10,8 +14,6 @@ jQuery(document).ready(function ($) {
 
     // Add geolocation UI to the form
     function addGeolocationUI() {
-      console.log("Inside addGeolocationUI()");
-
       // Create geolocation icon to place beside location input
       var geolocationIconHTML = `
         <button type="button" id="get-location" class="location-btn" style="background: none; border: none; cursor: pointer; padding: 0; margin-left: 10px;">
@@ -193,8 +195,7 @@ jQuery(document).ready(function ($) {
       });
     }
 
-    // Add geolocation UI when the page loads
-    addGeolocationUI();
+     addGeolocationUI();
 
     function setMinHeight() {
       var jobCards = $(".ae_job_card");
@@ -285,10 +286,6 @@ jQuery(document).ready(function ($) {
             // Set the coordinates in the form fields
             $("#user_latitude").val(lat);
             $("#user_longitude").val(lng);
-
-            console.log("Selected place: ", place.formatted_address);
-            console.log("Coordinates: ", lat, lng);
-            
             // Show the radius slider since we have a location
             $("#geo-radius-container").show();
 
@@ -329,13 +326,44 @@ jQuery(document).ready(function ($) {
               // Set the coordinates in the form fields
               $("#widget_location_filter #user_latitude").val(lat);
               $("#widget_location_filter #user_longitude").val(lng);
-
-              console.log("Widget selected place: ", place.formatted_address);
-              console.log("Widget coordinates: ", lat, lng);
             }
 
             // Submit the widget form when a place is selected
             $("#job-filter-widget-form").submit();
+          });
+        }
+        
+        // Initialize autocomplete for the new location input
+        const newLocationInput = document.getElementById("location-autocomplete");
+        
+        if (newLocationInput) {
+          const newAutocomplete = new Autocomplete(
+            newLocationInput,
+            {
+              types: ["geocode"],
+              componentRestrictions: { country: countryRestrictions },
+              fields: ["geometry", "formatted_address", "name"],
+            }
+          );
+          
+          // When the user selects an address from the dropdown
+          newAutocomplete.addListener("place_changed", function () {
+            const place = newAutocomplete.getPlace();
+            
+            if (!place.geometry) {
+              console.log(
+                "No details available for input: '" + place.name + "'"
+              );
+              return;
+            }
+            
+            // Get the location coordinates
+            const lat = place.geometry.location.lat();
+            const lng = place.geometry.location.lng();
+            
+            // Store the coordinates in hidden fields
+            $("#location_autocomplete_lat").val(lat);
+            $("#location_autocomplete_lng").val(lng);
           });
         }
       } catch (error) {
@@ -346,11 +374,13 @@ jQuery(document).ready(function ($) {
       }
     }
 
-    // Initialize Google Places when the page is fully loaded
-    $(window).on("load", function () {
-      // Wait a short time to ensure all scripts are loaded
-      setTimeout(initializeGooglePlaces, 500);
-    });
+  // Try to initialize Google Places as soon as possible
+$(document).ready(function() {
+  setTimeout(function() {
+    initializeGooglePlaces();
+  }, 1000);
+
+});
 
     // Update radius value when slider changes
     radiusSlider.on("input", function () {
@@ -369,16 +399,12 @@ jQuery(document).ready(function ($) {
       setTimeout(function () {
         radiusValue.css("color", "");
       }, 500);
-
-      console.log("Radius slider value changed to: " + radius + "km");
     });
 
     // Fetch jobs when slider changes (only when done sliding)
     radiusSlider.on("change", function () {
       // If location is entered, fetch jobs immediately
       if (locationInput.val().trim() !== "") {
-        console.log("Fetching jobs with radius: " + $(this).val() + "km");
-
         // If we have coordinates from autocomplete, use them
         if (window.selectedPlaceCoordinates) {
           // Use the coordinates from the selected place
@@ -521,8 +547,6 @@ jQuery(document).ready(function ($) {
     const catHomeDefaultValue = $catHomeOptions.first().data("value"); // Store the default option value
 
     $catHomeLabel.on("click", function () {
-      console.log("Cat Drop");
-
       $catHomeDropdown.toggleClass("open");
     });
 
@@ -822,12 +846,6 @@ jQuery(document).ready(function ($) {
             window.selectedPlaceCoordinates.lng
           );
           $("#widget_location_filter #search_radius").val($(this).val());
-
-          console.log(
-            "Widget using coordinates from selected place: ",
-            window.selectedPlaceCoordinates.lat,
-            window.selectedPlaceCoordinates.lng
-          );
         }
 
         $("#job-filter-widget-form").submit();

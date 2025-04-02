@@ -30,36 +30,17 @@ class Job_Filtering_Ajax
             // Get location data from the Google Maps ACF field
             $location_data = get_field('address', $job_id);
             
-            // Check if we have valid location data
+            // Initialize variables
+            $latitude = '';
+            $longitude = '';
+            
+            // First try to get coordinates from ACF Google Maps field
             if (!empty($location_data) && is_array($location_data)) {
-                // ACF Google Maps field stores lat/lng directly
                 $latitude = isset($location_data['lat']) ? $location_data['lat'] : '';
                 $longitude = isset($location_data['lng']) ? $location_data['lng'] : '';
-            } else {
-                // Fallback to the old method for backward compatibility
-                $job_location = get_post_meta($job_id, 'address', true);
-                
-                // Check if we already have coordinates for this job
-                $latitude = get_post_meta($job_id, '_job_latitude', true);
-                $longitude = get_post_meta($job_id, '_job_longitude', true);
-                
-                // If we don't have coordinates, geocode the location
-                if (empty($latitude) || empty($longitude)) {
-                    // Only geocode if we have a location
-                    if (!empty($job_location)) {
-                        $coordinates = self::geocode_location($job_location);
-                        
-                        if ($coordinates) {
-                            $latitude = $coordinates['latitude'];
-                            $longitude = $coordinates['longitude'];
-                            
-                            // Store the coordinates for future use
-                            update_post_meta($job_id, '_job_latitude', $latitude);
-                            update_post_meta($job_id, '_job_longitude', $longitude);
-                        }
-                    }
-                }
             }
+            
+         
             
             // Only include jobs with coordinates
             if (!empty($latitude) && !empty($longitude)) {
@@ -80,11 +61,11 @@ class Job_Filtering_Ajax
      * @param float $latitude User's latitude
      * @param float $longitude User's longitude
      * @param int $radius Radius in kilometers
-     * @return array Array of job IDs within the radius
+     * @return array Array with job IDs and their distances within the radius
      */
     private static function filter_jobs_by_distance($jobs_with_coords, $latitude, $longitude, $radius)
     {
-        $nearby_job_ids = array();
+        $nearby_jobs = array();
         
         foreach ($jobs_with_coords as $job_id => $coords) {
             $distance = self::calculate_distance(
@@ -95,14 +76,11 @@ class Job_Filtering_Ajax
             );
             
             if ($distance <= $radius) {
-                $nearby_job_ids[] = $job_id;
-                
-                // Store the distance for potential display
-                update_post_meta($job_id, '_job_distance', round($distance, 1));
+                $nearby_jobs[$job_id] = round($distance, 1);
             }
         }
         
-        return $nearby_job_ids;
+        return $nearby_jobs;
     }
     
     /**
@@ -142,7 +120,6 @@ class Job_Filtering_Ajax
         
         // Get API key from settings
         $api_key = get_option('jfp_google_maps_api_key');
-        
         // If no API key is set in settings, return false
         if (empty($api_key)) {
             error_log('Google Maps API key not found in settings');
@@ -204,41 +181,15 @@ class Job_Filtering_Ajax
     {
         try {
             $paged = isset($_POST['page']) ? intval($_POST['page']) : 1;
-
-            // $args = array(
-            //     'post_type' => 'job_listing',
-            //     'posts_per_page' => 30,
-            //     'paged' => $paged,
-            //     'orderby' => 'modified', // Order by modified date
-            //     'order' => 'DESC', // Latest modified first
-            //     'post_status' => 'publish', // Only show published jobs
-            //     'meta_query' => array(
-            //         'relation' => 'AND'
-            //     ),
-            //     'tax_query' => array(
-            //         'relation' => 'AND'
-            //     )
-            // );
-
             $args = array(
                 'post_type' => 'job_listing',
                 'posts_per_page' => 30,
                 'paged' => $paged,
                 'orderby' => array(
-                    'meta_value' => 'ASC', // Sort by meta value (expiration date)
-                    'modified' => 'DESC', // Secondary sort by last modified date
+                    'meta_value' => 'ASC',
+                    'modified' => 'DESC',
                 ),
-                // 'meta_key' => '_application_deadline', // Key for expiration date
-                'post_status' => 'publish', // Only show published jobs
-                // 'meta_query' => array(
-                //     'relation' => 'AND',
-                //     array(
-                //         'key' => '_application_deadline', // Include only posts with expiration dates
-                //         'value' => current_time('Y-m-d'), // Compare against the current date
-                //         'compare' => '>=', // Only include jobs that are not yet expired
-                //         'type' => 'DATE'
-                //     )
-                // ),
+                'post_status' => 'publish',
                 'tax_query' => array(
                     'relation' => 'AND'
                 )
@@ -307,10 +258,12 @@ class Job_Filtering_Ajax
                     $jobs_with_coords = self::get_jobs_with_coordinates();
                     
                     // Filter jobs by distance
-                    $nearby_job_ids = self::filter_jobs_by_distance($jobs_with_coords, $latitude, $longitude, $radius);
+                    $nearby_jobs = self::filter_jobs_by_distance($jobs_with_coords, $latitude, $longitude, $radius);
                     
-                    if (!empty($nearby_job_ids)) {
-                        $args['post__in'] = $nearby_job_ids;
+                    if (!empty($nearby_jobs)) {
+                        $args['post__in'] = array_keys($nearby_jobs);
+                        // Store distances in a variable that will be accessible during rendering
+                        $GLOBALS['job_distances'] = $nearby_jobs;
                     } else {
                         // If no jobs found within radius, return empty result
                         $args['post__in'] = array(0); // This will return no results
@@ -357,10 +310,12 @@ class Job_Filtering_Ajax
                 $jobs_with_coords = self::get_jobs_with_coordinates();
                 
                 // Filter jobs by distance
-                $nearby_job_ids = self::filter_jobs_by_distance($jobs_with_coords, $latitude, $longitude, $radius);
+                $nearby_jobs = self::filter_jobs_by_distance($jobs_with_coords, $latitude, $longitude, $radius);
                 
-                if (!empty($nearby_job_ids)) {
-                    $args['post__in'] = $nearby_job_ids;
+                if (!empty($nearby_jobs)) {
+                    $args['post__in'] = array_keys($nearby_jobs);
+                    // Store distances in a variable that will be accessible during rendering
+                    $GLOBALS['job_distances'] = $nearby_jobs;
                 } else {
                     // If no jobs found within radius, return empty result
                     $args['post__in'] = array(0); // This will return no results
@@ -501,9 +456,10 @@ class Job_Filtering_Ajax
                         echo '<div class="ae_job_card__location">' . $map_svg . ' <span>' . esc_html($location);
                         
                         // Show distance if geolocation was used
-                        if (!empty($_POST['latitude']) && !empty($_POST['longitude'])) {
-                            $distance = get_post_meta(get_the_ID(), '_job_distance', true);
-                            if (!empty($distance)) {
+                        if (!empty($_POST['latitude']) && !empty($_POST['longitude']) && !empty($GLOBALS['job_distances'])) {
+                            $job_id = get_the_ID();
+                            if (isset($GLOBALS['job_distances'][$job_id])) {
+                                $distance = $GLOBALS['job_distances'][$job_id];
                                 echo ' <em>(' . $distance . ' km away)</em>';
                             }
                         }

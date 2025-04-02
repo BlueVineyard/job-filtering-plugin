@@ -13,7 +13,6 @@ class Job_Filtering_Plugin
 
     public static function job_filter_form()
     {
-        $locations = self::get_job_locations();
         $jobTypes = self::get_job_listing_types();
         $jobCats = self::get_job_listing_categories();
         $available_company_names = self::get_company_names();
@@ -163,7 +162,7 @@ class Job_Filtering_Plugin
                                 stroke="#3D3935" stroke-width="1.5" />
                             <ellipse cx="10" cy="8.8335" rx="2.5" ry="2.5" stroke="#3D3935" stroke-width="1.5" />
                         </svg>
-                        <input type="text" name="job_location" id="job_location" placeholder="Enter location"
+                        <input type="text" name="job_location" id="job_location" placeholder="Enter location" autocomplete="on"
                             value="<?php echo esc_attr($job_location); ?>" class="location-input">
                     </div>
                 </div>
@@ -253,7 +252,6 @@ class Job_Filtering_Plugin
      */
     public static function job_filter_widget()
     {
-        $locations = self::get_job_locations();
         // Get job categories
         $categories = self::get_job_listing_categories();
 
@@ -336,16 +334,6 @@ class Job_Filtering_Plugin
 <?php
         return ob_get_clean();
     }
-
-    private static function get_job_locations()
-    {
-        $terms = get_terms(array(
-            'taxonomy' => 'location',
-            'hide_empty' => false,
-        ));
-        return $terms;
-    }
-
 
     private static function get_company_names()
     {
